@@ -2,6 +2,8 @@ package net.godaa.FirstProject.Repositories;
 
 import net.godaa.FirstProject.dao.PersonDao;
 import net.godaa.FirstProject.models.Person;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -13,6 +15,13 @@ import java.util.UUID;
 public class PersonRepository implements PersonDao {
     private static List<Person> personList = new ArrayList<>();
 
+    private final JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    public PersonRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
 
     @Override
     public int insertPerson(UUID id, Person person) {
@@ -22,7 +31,14 @@ public class PersonRepository implements PersonDao {
 
     @Override
     public List<Person> getAllPeople() {
-        return personList;
+        final String sql = "SELECT id,name FROM person";
+        List<Person> person = jdbcTemplate.query(sql, (resultSet, i) -> {
+            UUID id = UUID.fromString(resultSet.getString("id"));
+            String name = resultSet.getString("name");
+            return new Person(id, name);
+        });
+        return person;
+
     }
 
     @Override
@@ -52,9 +68,21 @@ public class PersonRepository implements PersonDao {
 
     @Override
     public Optional<Person> selectPersonById(UUID id) {
-        return personList.stream()
-                .filter(person -> person.getId().equals(id))
-                .findFirst();
+        final String sql = "SELECT id,name FROM person WHERE id = ? ";
+
+        Person person = jdbcTemplate.queryForObject(
+                sql,
+                new Object[]{id},
+                (resultSet, i) -> {
+                    UUID personId = UUID.fromString(resultSet.getString("id"));
+                    String name = resultSet.getString("name");
+                    return new Person(personId, name);
+                }
+        );
+
+        return Optional.ofNullable(person);
+
+
     }
 
 
