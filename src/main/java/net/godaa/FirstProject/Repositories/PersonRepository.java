@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@Repository("fakeDao")
+@Repository("postgres")
 public class PersonRepository implements PersonDao {
     private static List<Person> personList = new ArrayList<>();
 
